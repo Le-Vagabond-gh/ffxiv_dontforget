@@ -11,6 +11,9 @@ Automatically summons carbuncle and fairy as Summoner and Scholar when standing 
 - Under "Dev Plugin Locations", click "Select dev plugin DLL"
 - Add the DLL you downloaded
 - Press "Save and Close"
+- in the main plugin installer window, enable the plugin in Dev Tools
+
+note: adding custom repositories to Dalamud is a security risk, this way protects you from malicious updates from untrusted sources
 
 ## Usage
 Type `/dontforget` in chat to open the configuration window.
