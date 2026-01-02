@@ -4,7 +4,7 @@ Automatically summons carbuncle and fairy as Summoner and Scholar when standing 
 **Author:** Le Vagabond (forked from Spooee's original work)
 
 ## Installation
-- Download the DLL from [Releases](https://github.com/Le-Vagabond-gh/ffxiv_dontforget/releases)
+- Download the DLL and manifest JSON from [Releases](https://github.com/Le-Vagabond-gh/ffxiv_dontforget/releases) in the same location
 - Open the Dalamud Plugin Installer
 - Go to Settings
 - Head to the "Experimental" tab
