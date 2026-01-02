@@ -11,6 +11,8 @@ namespace dontforget
         public bool Scholar { get; set; } = true;
         public bool Summoner { get; set; } = true;
         public bool Peloton { get; set; } = true;
+        public bool AutoSprint { get; set; } = true;
+        public bool DebugLogging { get; set; } = false;
 
         [NonSerialized]
         private IDalamudPluginInterface? PluginInterface;

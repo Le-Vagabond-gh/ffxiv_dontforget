@@ -1,5 +1,5 @@
 using Dalamud.Interface.Windowing;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System;
 using System.Numerics;
 
@@ -13,7 +13,7 @@ public class ConfigWindow : Window, IDisposable
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
-        this.Size = new Vector2(270, 150);
+        this.Size = new Vector2(270, 210);
         this.SizeCondition = ImGuiCond.Always;
         this.Configuration = plugin.Configuration;
     }
@@ -35,6 +35,13 @@ public class ConfigWindow : Window, IDisposable
             this.Configuration.Save();
         }
 
+        var sprintConfig = this.Configuration.AutoSprint;
+        if (ImGui.Checkbox("Auto Sprint", ref sprintConfig))
+        {
+            this.Configuration.AutoSprint = sprintConfig;
+            this.Configuration.Save();
+        }
+
         if (ImGui.Checkbox("Scholar - Summon Fairy", ref scholarConfig))
         {
             this.Configuration.Scholar = scholarConfig;
@@ -44,6 +51,14 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox("Summoner - Summon Carbuncle", ref summonerConfig))
         {
             this.Configuration.Summoner = summonerConfig;
+            this.Configuration.Save();
+        }
+
+        ImGui.Spacing();
+        var debugConfig = this.Configuration.DebugLogging;
+        if (ImGui.Checkbox("Debug Logging", ref debugConfig))
+        {
+            this.Configuration.DebugLogging = debugConfig;
             this.Configuration.Save();
         }
     }

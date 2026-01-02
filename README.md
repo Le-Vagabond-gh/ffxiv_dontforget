@@ -1,10 +1,23 @@
 ## Don't Forget
-At the start of every duty and every pull thereafter, automatically ~~draws cards as Astrologian~~ *no longer necessary since dawntrail*, summons carbuncle and fairy as Summoner and Scholar. Automatically uses Peloton as Phys Ranged
+Automatically summons carbuncle and fairy as Summoner and Scholar when standing still. Automatically uses Peloton (Phys Ranged) and Sprint when moving.
+
+**Author:** Le Vagabond (forked from Spooee's original work)
 
 ## Installation
-- Type ```/xlsettings``` in chat
+- Download the DLL from [Releases](https://github.com/Le-Vagabond-gh/ffxiv_dontforget/releases)
+- Open the Dalamud Plugin Installer
+- Go to Settings
 - Head to the "Experimental" tab
-- Add ```https://raw.githubusercontent.com/spooee/ffxiv_plogons/master/pluginmaster.json``` into an empty box under "Custom Plugin Repositories"
-- Hit the "+" button
-- Press the "Save changes and close" button located in the bottom right corner of the window
-- Install the plugin like you would any other plugin in the Plugin Installer and enjoy
+- Under "Dev Plugin Locations", click "Select dev plugin DLL"
+- Add the DLL you downloaded
+- Press "Save and Close"
+
+## Usage
+Type `/dontforget` in chat to open the configuration window.
+
+### Toggles
+- **Phys Ranged - Auto Peloton** - Automatically uses Peloton when moving (Physical Ranged jobs only)
+- **Auto Sprint** - Automatically uses Sprint when moving (any job)
+- **Scholar - Summon Fairy** - Automatically summons fairy when standing still
+- **Summoner - Summon Carbuncle** - Automatically summons carbuncle when standing still
+- **Debug Logging** - Enables debug output to the Dalamud log (`/xllog`)

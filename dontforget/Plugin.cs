@@ -5,6 +5,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using System;
 using System.Linq;
 
 namespace dontforget
@@ -22,6 +23,8 @@ namespace dontforget
         private uint summonFairy = 17215;
         private uint summonCarbuncle = 25798;
         private uint peloton = 7557;
+        private uint sprint = 4;
+        private DateTime lastDebugLog = DateTime.MinValue;
 
         public Plugin(
             IDalamudPluginInterface pluginInterface,
@@ -45,8 +48,6 @@ namespace dontforget
 
             this.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
             this.PluginInterface.UiBuilder.Draw += DrawUI;
-            Service.DutyState.DutyStarted += onDuty;
-            Service.DutyState.DutyRecommenced += onDuty;
             Service.Framework.Update += onFrameworkUpdate;
         }
 
@@ -55,38 +56,60 @@ namespace dontforget
             AM = ActionManager.Instance();
         }
 
-        private unsafe void onDuty(object? sender, ushort t)
-        {
-            bool actionPerformed = true;
-            uint actionID = summonFairy;
-
-            if (Service.ClientState == null || Service.ClientState.LocalPlayer == null || !Service.ClientState.IsLoggedIn) return;
-
-            var classJobID = Service.ClientState.LocalPlayer.ClassJob.Id;
-
-            if (classJobID == 28 && this.Configuration.Scholar)
-            {
-                actionID = summonFairy;
-                actionPerformed = AM->UseAction(ActionType.Action, actionID);
-            }
-
-            else if (classJobID == 27 && this.Configuration.Summoner)
-            {
-                actionID = summonCarbuncle;
-                actionPerformed = AM->UseAction(ActionType.Action, actionID);
-            }
-        }
-
         private unsafe void onFrameworkUpdate(IFramework framework)
         {
-            if (Service.ClientState == null || Service.ClientState.LocalPlayer == null || !Service.ClientState.IsLoggedIn || Service.Condition[ConditionFlag.InCombat]) return;
+            if (Service.ClientState == null || Service.ObjectTable.LocalPlayer == null || !Service.ClientState.IsLoggedIn || Service.Condition[ConditionFlag.InCombat]) return;
 
             var isPelotonReady = AM->GetActionStatus(ActionType.Action, peloton) == 0;
-            var hasPelotonBuff = Service.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
+            var isSprintReady = AM->GetActionStatus(ActionType.GeneralAction, sprint) == 0;
+            var hasPelotonBuff = Service.ObjectTable.LocalPlayer.StatusList.Any(x => x.StatusId == 1199);
+            var hasSprintBuff = Service.ObjectTable.LocalPlayer.StatusList.Any(x => x.StatusId == 50);
 
-            if (this.Configuration.Peloton && isPelotonReady && !hasPelotonBuff && AgentMap.Instance()->IsPlayerMoving == 1)
+            if (this.Configuration.DebugLogging && (DateTime.Now - lastDebugLog).TotalSeconds >= 2)
+            {
+                lastDebugLog = DateTime.Now;
+                var sprintStatus = AM->GetActionStatus(ActionType.GeneralAction, sprint);
+                var sprintRecast = AM->GetRecastTime(ActionType.GeneralAction, sprint);
+                Service.PluginLog.Info($"Peloton ready: {isPelotonReady}, Sprint ready: {isSprintReady} (status:{sprintStatus}), HasPeloton: {hasPelotonBuff}, HasSprint: {hasSprintBuff}, Moving: {AgentMap.Instance()->IsPlayerMoving}, Recast: {sprintRecast}");
+            }
+
+            var isMoving = AgentMap.Instance()->IsPlayerMoving;
+
+            // Auto Peloton when moving (Phys Ranged only)
+            if (this.Configuration.Peloton && isMoving && isPelotonReady && !hasPelotonBuff)
             {
                 AM->UseAction(ActionType.Action, peloton);
+            }
+
+            // Auto Sprint when moving (any class)
+            if (this.Configuration.AutoSprint && isMoving && isSprintReady && !hasPelotonBuff && !hasSprintBuff)
+            {
+                AM->UseAction(ActionType.GeneralAction, sprint);
+            }
+
+            // Auto summon pet when not moving and not in combat
+            if (!isMoving)
+            {
+                var classJobID = Service.ObjectTable.LocalPlayer.ClassJob.RowId;
+                
+                // Check if pet is already summoned by looking for pet in object table
+                var hasPet = Service.ObjectTable.Any(obj => obj.OwnerId == Service.ObjectTable.LocalPlayer.GameObjectId && 
+                    (obj.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.BattleNpc));
+
+                if (!hasPet)
+                {
+                    var isFairySummonReady = AM->GetActionStatus(ActionType.Action, summonFairy) == 0;
+                    var isCarbuncleSummonReady = AM->GetActionStatus(ActionType.Action, summonCarbuncle) == 0;
+
+                    if (classJobID == 28 && this.Configuration.Scholar && isFairySummonReady)
+                    {
+                        AM->UseAction(ActionType.Action, summonFairy);
+                    }
+                    else if (classJobID == 27 && this.Configuration.Summoner && isCarbuncleSummonReady)
+                    {
+                        AM->UseAction(ActionType.Action, summonCarbuncle);
+                    }
+                }
             }
         }
 
@@ -94,8 +117,6 @@ namespace dontforget
         {
             this.WindowSystem.RemoveAllWindows();
             this.CommandManager.RemoveHandler(CommandName);
-            Service.DutyState.DutyStarted -= onDuty;
-            Service.DutyState.DutyRecommenced -= onDuty;
             Service.Framework.Update -= onFrameworkUpdate;
         }
 
