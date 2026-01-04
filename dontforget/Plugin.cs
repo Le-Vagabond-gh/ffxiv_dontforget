@@ -25,6 +25,7 @@ namespace dontforget
         private uint peloton = 7557;
         private uint sprint = 4;
         private DateTime lastDebugLog = DateTime.MinValue;
+        private DateTime lastSummonDebugLog = DateTime.MinValue;
 
         public Plugin(
             IDalamudPluginInterface pluginInterface,
@@ -58,7 +59,7 @@ namespace dontforget
 
         private unsafe void onFrameworkUpdate(IFramework framework)
         {
-            if (Service.ClientState == null || Service.ObjectTable.LocalPlayer == null || !Service.ClientState.IsLoggedIn || Service.Condition[ConditionFlag.InCombat]) return;
+            if (Service.ClientState == null || Service.ObjectTable.LocalPlayer == null || Service.Condition[ConditionFlag.InCombat]) return;
 
             var isPelotonReady = AM->GetActionStatus(ActionType.Action, peloton) == 0;
             var isSprintReady = AM->GetActionStatus(ActionType.GeneralAction, sprint) == 0;
@@ -70,7 +71,8 @@ namespace dontforget
                 lastDebugLog = DateTime.Now;
                 var sprintStatus = AM->GetActionStatus(ActionType.GeneralAction, sprint);
                 var sprintRecast = AM->GetRecastTime(ActionType.GeneralAction, sprint);
-                Service.PluginLog.Info($"Peloton ready: {isPelotonReady}, Sprint ready: {isSprintReady} (status:{sprintStatus}), HasPeloton: {hasPelotonBuff}, HasSprint: {hasSprintBuff}, Moving: {AgentMap.Instance()->IsPlayerMoving}, Recast: {sprintRecast}");
+                var isMovingValue = AgentMap.Instance()->IsPlayerMoving;
+                Service.PluginLog.Info($"Peloton ready: {isPelotonReady}, Sprint ready: {isSprintReady} (status:{sprintStatus}), HasPeloton: {hasPelotonBuff}, HasSprint: {hasSprintBuff}, Moving: {isMovingValue}, Recast: {sprintRecast}");
             }
 
             var isMoving = AgentMap.Instance()->IsPlayerMoving;
@@ -91,10 +93,31 @@ namespace dontforget
             if (!isMoving)
             {
                 var classJobID = Service.ObjectTable.LocalPlayer.ClassJob.RowId;
+                var playerGameObjectId = Service.ObjectTable.LocalPlayer.GameObjectId;
                 
                 // Check if pet is already summoned by looking for pet in object table
-                var hasPet = Service.ObjectTable.Any(obj => obj.OwnerId == Service.ObjectTable.LocalPlayer.GameObjectId && 
-                    (obj.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.BattleNpc));
+                var petNames = new[] { "Carbuncle", "Eos", "Selene" };
+                var hasPet = Service.ObjectTable.Any(obj => 
+                    obj.OwnerId == playerGameObjectId && 
+                    obj.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.BattleNpc &&
+                    obj.IsValid() &&
+                    petNames.Contains(obj.Name.ToString()));
+
+                if (this.Configuration.DebugLogging && (DateTime.Now - lastSummonDebugLog).TotalSeconds >= 2)
+                {
+                    lastSummonDebugLog = DateTime.Now;
+                    var isFairySummonReady = AM->GetActionStatus(ActionType.Action, summonFairy) == 0;
+                    var isCarbuncleSummonReady = AM->GetActionStatus(ActionType.Action, summonCarbuncle) == 0;
+                    Service.PluginLog.Info($"Summon check - ClassJobID: {classJobID}, HasPet: {hasPet}, FairyReady: {isFairySummonReady}, CarbuncleReady: {isCarbuncleSummonReady}, ScholarEnabled: {this.Configuration.Scholar}, SummonerEnabled: {this.Configuration.Summoner}");
+                    
+                    // Debug: Log all objects owned by player
+                    var petObjects = Service.ObjectTable.Where(obj => obj.OwnerId == playerGameObjectId).ToList();
+                    Service.PluginLog.Info($"Objects owned by player: {petObjects.Count}");
+                    foreach (var obj in petObjects)
+                    {
+                        Service.PluginLog.Info($"  - Kind: {obj.ObjectKind}, IsValid: {obj.IsValid()}, Name: {obj.Name}, DataId: {obj.DataId}, EntityId: {obj.EntityId}");
+                    }
+                }
 
                 if (!hasPet)
                 {

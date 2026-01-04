@@ -11,5 +11,9 @@
     <Configurations>Debug;ExportDebug;ExportRelease;Release</Configurations>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(GITHUB_ACTIONS)' != 'true'">
+    <OutputPath>E:\FINAL FANTASY XIV\plugins\</OutputPath>
+  </PropertyGroup>
+
   
 </Project>
