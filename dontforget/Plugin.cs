@@ -26,6 +26,8 @@ namespace dontforget
         private uint sprint = 4;
         private DateTime lastDebugLog = DateTime.MinValue;
         private DateTime lastSummonDebugLog = DateTime.MinValue;
+        private DateTime petMissingInCombatSince = DateTime.MinValue;
+        private DateTime demiSummonLastSeen = DateTime.MinValue;
 
         public Plugin(
             IDalamudPluginInterface pluginInterface,
@@ -100,11 +102,25 @@ namespace dontforget
                 
                 // Check if pet is already summoned by looking for pet in object table
                 var petNames = new[] { "Carbuncle", "Eos", "Selene" };
-                var hasPet = Service.ObjectTable.Any(obj => 
-                    obj.OwnerId == playerGameObjectId && 
+                var demiSummonNames = new[] { "Demi-Bahamut", "Demi-Phoenix", "Ifrit-Egi", "Titan-Egi", "Garuda-Egi", "Solar Bahamut" };
+
+                var hasPet = Service.ObjectTable.Any(obj =>
+                    obj.OwnerId == playerGameObjectId &&
                     obj.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.BattleNpc &&
                     obj.IsValid() &&
                     petNames.Contains(obj.Name.ToString()));
+
+                var hasDemiSummon = Service.ObjectTable.Any(obj =>
+                    obj.OwnerId == playerGameObjectId &&
+                    obj.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.BattleNpc &&
+                    obj.IsValid() &&
+                    demiSummonNames.Contains(obj.Name.ToString()));
+
+                // Track when demi-summons were last active
+                if (hasDemiSummon)
+                {
+                    demiSummonLastSeen = DateTime.Now;
+                }
 
                 if (this.Configuration.DebugLogging && (DateTime.Now - lastSummonDebugLog).TotalSeconds >= 2)
                 {
@@ -124,17 +140,47 @@ namespace dontforget
 
                 if (!hasPet)
                 {
+                    var isInCombat = Service.Condition[ConditionFlag.InCombat];
+
+                    // In combat, wait 1 second before summoning (pets respawn naturally)
+                    if (isInCombat)
+                    {
+                        if (petMissingInCombatSince == DateTime.MinValue)
+                        {
+                            petMissingInCombatSince = DateTime.Now;
+                            return;
+                        }
+                        if ((DateTime.Now - petMissingInCombatSince).TotalSeconds < 1)
+                        {
+                            return;
+                        }
+                    }
+
                     var isFairySummonReady = AM->GetActionStatus(ActionType.Action, summonFairy) == 0;
                     var isCarbuncleSummonReady = AM->GetActionStatus(ActionType.Action, summonCarbuncle) == 0;
 
                     if (classJobID == 28 && this.Configuration.Scholar && isFairySummonReady)
                     {
                         AM->UseAction(ActionType.Action, summonFairy);
+                        petMissingInCombatSince = DateTime.MinValue;
                     }
                     else if (classJobID == 27 && this.Configuration.Summoner && isCarbuncleSummonReady)
                     {
-                        AM->UseAction(ActionType.Action, summonCarbuncle);
+                        // Don't summon carbuncle if demi-summon is active or was active within last 2 seconds
+                        var demiSummonRecentlyActive = hasDemiSummon ||
+                            (demiSummonLastSeen != DateTime.MinValue && (DateTime.Now - demiSummonLastSeen).TotalSeconds < 2);
+
+                        if (!demiSummonRecentlyActive)
+                        {
+                            AM->UseAction(ActionType.Action, summonCarbuncle);
+                            petMissingInCombatSince = DateTime.MinValue;
+                        }
                     }
+                }
+                else
+                {
+                    // Pet exists, reset the timer
+                    petMissingInCombatSince = DateTime.MinValue;
                 }
             }
         }
