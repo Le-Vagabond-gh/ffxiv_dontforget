@@ -13,7 +13,7 @@ public class ConfigWindow : Window, IDisposable
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
-        this.Size = new Vector2(270, 210);
+        this.Size = new Vector2(270, 235);
         this.SizeCondition = ImGuiCond.Always;
         this.Configuration = plugin.Configuration;
     }
@@ -51,6 +51,13 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.Checkbox("Summoner - Summon Carbuncle", ref summonerConfig))
         {
             this.Configuration.Summoner = summonerConfig;
+            this.Configuration.Save();
+        }
+
+        var summonInCombatConfig = this.Configuration.SummonInCombat;
+        if (ImGui.Checkbox("Allow Summon in Combat", ref summonInCombatConfig))
+        {
+            this.Configuration.SummonInCombat = summonInCombatConfig;
             this.Configuration.Save();
         }
 

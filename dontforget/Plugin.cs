@@ -59,7 +59,10 @@ namespace dontforget
 
         private unsafe void onFrameworkUpdate(IFramework framework)
         {
-            if (Service.ClientState == null || Service.ObjectTable.LocalPlayer == null || Service.Condition[ConditionFlag.InCombat]) return;
+            if (Service.ClientState == null || Service.ObjectTable.LocalPlayer == null) return;
+
+            // Skip if in combat and summon in combat is disabled
+            if (Service.Condition[ConditionFlag.InCombat] && !this.Configuration.SummonInCombat) return;
 
             var isPelotonReady = AM->GetActionStatus(ActionType.Action, peloton) == 0;
             var isSprintReady = AM->GetActionStatus(ActionType.GeneralAction, sprint) == 0;
