@@ -102,7 +102,7 @@ namespace dontforget
                 
                 // Check if pet is already summoned by looking for pet in object table
                 var petNames = new[] { "Carbuncle", "Eos", "Selene" };
-                var demiSummonNames = new[] { "Demi-Bahamut", "Demi-Phoenix", "Ifrit-Egi", "Titan-Egi", "Garuda-Egi", "Solar Bahamut" };
+                var demiSummonNames = new[] { "Demi-Bahamut", "Demi-Phoenix", "Ifrit-Egi", "Titan-Egi", "Garuda-Egi", "Solar Bahamut", "Seraph" };
 
                 var hasPet = Service.ObjectTable.Any(obj =>
                     obj.OwnerId == playerGameObjectId &&
