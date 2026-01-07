@@ -26,8 +26,10 @@ namespace dontforget
         private uint sprint = 4;
         private DateTime lastDebugLog = DateTime.MinValue;
         private DateTime lastSummonDebugLog = DateTime.MinValue;
-        private DateTime petMissingInCombatSince = DateTime.MinValue;
         private DateTime demiSummonLastSeen = DateTime.MinValue;
+        private bool wasUnconscious = false;
+        private bool wasInCombat = false;
+        private DateTime playerRaisedTimestamp = DateTime.MinValue;
 
         public Plugin(
             IDalamudPluginInterface pluginInterface,
@@ -63,8 +65,52 @@ namespace dontforget
         {
             if (Service.ClientState == null || Service.ObjectTable.LocalPlayer == null) return;
 
-            // Skip if in combat and summon in combat is disabled
-            if (Service.Condition[ConditionFlag.InCombat] && !this.Configuration.SummonInCombat) return;
+            var isInCombat = Service.Condition[ConditionFlag.InCombat];
+            var isCurrentlyUnconscious = Service.Condition[ConditionFlag.Unconscious];
+
+            // Reset timer when exiting combat
+            if (wasInCombat && !isInCombat)
+            {
+                playerRaisedTimestamp = DateTime.MinValue;
+                if (this.Configuration.DebugLogging)
+                {
+                    Service.PluginLog.Info("Exited combat - reset raise timer");
+                }
+            }
+
+            // Detect transition from unconscious to conscious (being raised)
+            if (wasUnconscious && !isCurrentlyUnconscious)
+            {
+                playerRaisedTimestamp = DateTime.Now;
+                if (this.Configuration.DebugLogging)
+                {
+                    Service.PluginLog.Info("Player raised - combat summon allowed for 15 seconds");
+                }
+            }
+
+            wasInCombat = isInCombat;
+            wasUnconscious = isCurrentlyUnconscious;
+
+            // Handle combat summoning restrictions
+            if (isInCombat)
+            {
+                if (!this.Configuration.SummonInCombatAfterDeath)
+                {
+                    return; // Config disabled - never summon in combat
+                }
+
+                // Only summon if raised within last 15 seconds
+                if (playerRaisedTimestamp == DateTime.MinValue)
+                {
+                    return; // Never been raised - don't summon
+                }
+
+                var timeSinceRaise = (DateTime.Now - playerRaisedTimestamp).TotalSeconds;
+                if (timeSinceRaise > 15)
+                {
+                    return; // More than 15 seconds since raise
+                }
+            }
 
             var isPelotonReady = AM->GetActionStatus(ActionType.Action, peloton) == 0;
             var isSprintReady = AM->GetActionStatus(ActionType.GeneralAction, sprint) == 0;
@@ -140,47 +186,17 @@ namespace dontforget
 
                 if (!hasPet)
                 {
-                    var isInCombat = Service.Condition[ConditionFlag.InCombat];
-
-                    // In combat, wait 1 second before summoning (pets respawn naturally)
-                    if (isInCombat)
-                    {
-                        if (petMissingInCombatSince == DateTime.MinValue)
-                        {
-                            petMissingInCombatSince = DateTime.Now;
-                            return;
-                        }
-                        if ((DateTime.Now - petMissingInCombatSince).TotalSeconds < 1)
-                        {
-                            return;
-                        }
-                    }
-
                     var isFairySummonReady = AM->GetActionStatus(ActionType.Action, summonFairy) == 0;
                     var isCarbuncleSummonReady = AM->GetActionStatus(ActionType.Action, summonCarbuncle) == 0;
 
                     if (classJobID == 28 && this.Configuration.Scholar && isFairySummonReady)
                     {
                         AM->UseAction(ActionType.Action, summonFairy);
-                        petMissingInCombatSince = DateTime.MinValue;
                     }
                     else if (classJobID == 27 && this.Configuration.Summoner && isCarbuncleSummonReady)
                     {
-                        // Don't summon carbuncle if demi-summon is active or was active within last 2 seconds
-                        var demiSummonRecentlyActive = hasDemiSummon ||
-                            (demiSummonLastSeen != DateTime.MinValue && (DateTime.Now - demiSummonLastSeen).TotalSeconds < 2);
-
-                        if (!demiSummonRecentlyActive)
-                        {
-                            AM->UseAction(ActionType.Action, summonCarbuncle);
-                            petMissingInCombatSince = DateTime.MinValue;
-                        }
+                        AM->UseAction(ActionType.Action, summonCarbuncle);
                     }
-                }
-                else
-                {
-                    // Pet exists, reset the timer
-                    petMissingInCombatSince = DateTime.MinValue;
                 }
             }
         }

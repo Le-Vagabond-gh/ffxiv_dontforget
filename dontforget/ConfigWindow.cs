@@ -54,11 +54,16 @@ public class ConfigWindow : Window, IDisposable
             this.Configuration.Save();
         }
 
-        var summonInCombatConfig = this.Configuration.SummonInCombat;
-        if (ImGui.Checkbox("Allow Summon in Combat", ref summonInCombatConfig))
+        var summonInCombatAfterDeathConfig = this.Configuration.SummonInCombatAfterDeath;
+        if (ImGui.Checkbox("Summon in Combat (After Death Only)", ref summonInCombatAfterDeathConfig))
         {
-            this.Configuration.SummonInCombat = summonInCombatConfig;
+            this.Configuration.SummonInCombatAfterDeath = summonInCombatAfterDeathConfig;
             this.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("When enabled, pets will auto-summon in combat only if you died\nand were raised within the last 15 seconds.");
         }
 
         ImGui.Spacing();
