@@ -13,7 +13,7 @@ public class ConfigWindow : Window, IDisposable
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
-        this.Size = new Vector2(270, 235);
+        this.Size = new Vector2(270, 260);
         this.SizeCondition = ImGuiCond.Always;
         this.Configuration = plugin.Configuration;
     }
@@ -40,6 +40,18 @@ public class ConfigWindow : Window, IDisposable
         {
             this.Configuration.AutoSprint = sprintConfig;
             this.Configuration.Save();
+        }
+
+        var gysahlConfig = this.Configuration.AutoGysahlGreens;
+        if (ImGui.Checkbox("Auto Gysahl Greens (< 15 min)", ref gysahlConfig))
+        {
+            this.Configuration.AutoGysahlGreens = gysahlConfig;
+            this.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Automatically use Gysahl Greens when your chocobo\ncompanion's timer falls below 15 minutes.");
         }
 
         if (ImGui.Checkbox("Scholar - Summon Fairy", ref scholarConfig))

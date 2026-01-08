@@ -4,6 +4,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using System;
 using System.Linq;
@@ -24,8 +25,10 @@ namespace dontforget
         private uint summonCarbuncle = 25798;
         private uint peloton = 7557;
         private uint sprint = 4;
+        private uint gysahlGreens = 4868;
         private DateTime lastDebugLog = DateTime.MinValue;
         private DateTime lastSummonDebugLog = DateTime.MinValue;
+        private DateTime lastGysahlUse = DateTime.MinValue;
         private DateTime demiSummonLastSeen = DateTime.MinValue;
         private bool wasUnconscious = false;
         private bool wasInCombat = false;
@@ -196,6 +199,27 @@ namespace dontforget
                     else if (classJobID == 27 && this.Configuration.Summoner && isCarbuncleSummonReady)
                     {
                         AM->UseAction(ActionType.Action, summonCarbuncle);
+                    }
+                }
+            }
+
+            // Auto Gysahl Greens when chocobo timer is low (after pet summon to prioritize pets)
+            // Only check every 2 seconds to allow cast to complete
+            if (this.Configuration.AutoGysahlGreens && !isInCombat && (DateTime.Now - lastGysahlUse).TotalSeconds >= 5)
+            {
+                var companionTimeLeft = UIState.Instance()->Buddy.CompanionInfo.TimeLeft;
+                // Only use if chocobo is present (timer > 0) and under 15 minutes (900 seconds)
+                if (companionTimeLeft > 0 && companionTimeLeft < 900)
+                {
+                    var canUseGysahl = AM->GetActionStatus(ActionType.Item, gysahlGreens) == 0;
+                    if (canUseGysahl)
+                    {
+                        AM->UseAction(ActionType.Item, gysahlGreens, 0xE0000000, 0xFFFF);
+                        lastGysahlUse = DateTime.Now;
+                        if (this.Configuration.DebugLogging)
+                        {
+                            Service.PluginLog.Info($"Used Gysahl Greens - Chocobo timer was {companionTimeLeft:F0} seconds");
+                        }
                     }
                 }
             }

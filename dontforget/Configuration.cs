@@ -15,6 +15,7 @@ namespace dontforget
         public bool SummonInCombatAfterDeath { get; set; } = true;
         public bool Peloton { get; set; } = true;
         public bool AutoSprint { get; set; } = true;
+        public bool AutoGysahlGreens { get; set; } = false;
         public bool DebugLogging { get; set; } = false;
 
         [NonSerialized]
