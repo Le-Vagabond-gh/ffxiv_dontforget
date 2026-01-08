@@ -2,6 +2,9 @@ name: Build and Release
 
 on:
   push:
+    paths:
+      - 'dontforget/**'
+      - 'dontforget.sln'
   workflow_dispatch:
 
 permissions:
@@ -54,20 +57,20 @@ jobs:
             TAG="v$(date +'%Y%m%d%H%M%S')-${GITHUB_SHA::7}"
           fi
 
-          # Get the previous tag for --notes-start-tag
+          # Get the previous tag for changelog
           PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
+          # Generate changelog from commits
           if [ -n "$PREV_TAG" ]; then
-            gh release create "$TAG" \
-              dontforget/bin/Release/dontforget.dll \
-              dontforget/bin/Release/dontforget.json \
-              --generate-notes \
-              --notes-start-tag "$PREV_TAG" \
-              --title "Release $TAG"
+            COMMITS=$(git log --pretty=format:"- %s" "$PREV_TAG"..HEAD)
+            CHANGELOG_LINK="**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREV_TAG...$TAG"
+            NOTES="$COMMITS"$'\n\n'"$CHANGELOG_LINK"
           else
-            gh release create "$TAG" \
-              dontforget/bin/Release/dontforget.dll \
-              dontforget/bin/Release/dontforget.json \
-              --generate-notes \
-              --title "Release $TAG"
+            NOTES=$(git log --pretty=format:"- %s" 2>/dev/null || echo "Initial release")
           fi
+
+          gh release create "$TAG" \
+            dontforget/bin/Release/dontforget.dll \
+            dontforget/bin/Release/dontforget.json \
+            --notes "$NOTES" \
+            --title "Release $TAG"
