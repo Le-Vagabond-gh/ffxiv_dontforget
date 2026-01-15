@@ -11,5 +11,6 @@ namespace dontforget
         [PluginService] public static IDutyState DutyState { get; private set; } = null!;
         [PluginService] public static IObjectTable ObjectTable { get; private set; } = null!;
         [PluginService] public static IPluginLog PluginLog { get; private set; } = null!;
+        [PluginService] public static IChatGui ChatGui { get; private set; } = null!;
     }
 }

@@ -10,6 +10,7 @@ A Dalamud plugin that automates common actions you always forget to do in FFXIV.
 - **Summon Fairy** - Automatically summons your fairy when standing still (Scholar)
 - **Summon Carbuncle** - Automatically summons your carbuncle when standing still (Summoner)
 - **Summon in Combat (After Death)** - Re-summons your pet in combat after being raised
+- **Auto Tank Stance** - Automatically enables tank stance when standing still (PLD, WAR, DRK, GNB)
 
 ## Installation
 - Download the DLL and manifest JSON from [Releases](https://github.com/Le-Vagabond-gh/ffxiv_dontforget/releases) in the same location
@@ -24,4 +25,8 @@ A Dalamud plugin that automates common actions you always forget to do in FFXIV.
 Note: adding custom repositories to Dalamud is a security risk, this way protects you from malicious updates from untrusted sources.
 
 ## Usage
-Type `/dontforget` in chat to open the configuration window.
+Type `/dontforget` or `/df` in chat to open the configuration window.
+
+### Commands
+- `/df` - Open the configuration window
+- `/df tankstance` - Toggle auto tank stance on/off (useful for macros)

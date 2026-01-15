@@ -15,6 +15,7 @@ namespace dontforget
     {
         public string Name => "Don't Forget";
         private const string CommandName = "/dontforget";
+        private const string ShortCommandName = "/df";
         private IDalamudPluginInterface PluginInterface { get; init; }
         private ICommandManager CommandManager { get; init; }
         public Configuration Configuration { get; init; }
@@ -26,6 +27,16 @@ namespace dontforget
         private uint peloton = 7557;
         private uint sprint = 4;
         private uint gysahlGreens = 4868;
+        // Tank stance actions
+        private uint ironWill = 28;      // Paladin
+        private uint defiance = 48;      // Warrior
+        private uint grit = 3629;        // Dark Knight
+        private uint royalGuard = 16142; // Gunbreaker
+        // Tank stance status IDs
+        private uint ironWillStatus = 79;
+        private uint defianceStatus = 91;
+        private uint gritStatus = 743;
+        private uint royalGuardStatus = 1833;
         private DateTime lastDebugLog = DateTime.MinValue;
         private DateTime lastSummonDebugLog = DateTime.MinValue;
         private DateTime lastGysahlUse = DateTime.MinValue;
@@ -50,6 +61,11 @@ namespace dontforget
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
                 HelpMessage = "Open the config window!"
+            });
+
+            this.CommandManager.AddHandler(ShortCommandName, new CommandInfo(OnCommand)
+            {
+                HelpMessage = "Open config or toggle settings. Usage: /df [tankstance]"
             });
 
             unsafe { LoadUnsafe(); }
@@ -201,6 +217,45 @@ namespace dontforget
                         AM->UseAction(ActionType.Action, summonCarbuncle);
                     }
                 }
+
+                // Auto tank stance when not moving
+                if (this.Configuration.TankStance)
+                {
+                    var statusList = Service.ObjectTable.LocalPlayer.StatusList;
+
+                    // Paladin (19) - Iron Will
+                    if (classJobID == 19 && !statusList.Any(x => x.StatusId == ironWillStatus))
+                    {
+                        if (AM->GetActionStatus(ActionType.Action, ironWill) == 0)
+                        {
+                            AM->UseAction(ActionType.Action, ironWill);
+                        }
+                    }
+                    // Warrior (21) - Defiance
+                    else if (classJobID == 21 && !statusList.Any(x => x.StatusId == defianceStatus))
+                    {
+                        if (AM->GetActionStatus(ActionType.Action, defiance) == 0)
+                        {
+                            AM->UseAction(ActionType.Action, defiance);
+                        }
+                    }
+                    // Dark Knight (32) - Grit
+                    else if (classJobID == 32 && !statusList.Any(x => x.StatusId == gritStatus))
+                    {
+                        if (AM->GetActionStatus(ActionType.Action, grit) == 0)
+                        {
+                            AM->UseAction(ActionType.Action, grit);
+                        }
+                    }
+                    // Gunbreaker (37) - Royal Guard
+                    else if (classJobID == 37 && !statusList.Any(x => x.StatusId == royalGuardStatus))
+                    {
+                        if (AM->GetActionStatus(ActionType.Action, royalGuard) == 0)
+                        {
+                            AM->UseAction(ActionType.Action, royalGuard);
+                        }
+                    }
+                }
             }
 
             // Auto Gysahl Greens when chocobo timer is low (after pet summon to prioritize pets)
@@ -229,12 +284,31 @@ namespace dontforget
         {
             this.WindowSystem.RemoveAllWindows();
             this.CommandManager.RemoveHandler(CommandName);
+            this.CommandManager.RemoveHandler(ShortCommandName);
             Service.Framework.Update -= onFrameworkUpdate;
         }
 
         private void OnCommand(string command, string args)
         {
-            ConfigWindow.IsOpen = true;
+            var trimmedArgs = args.Trim().ToLowerInvariant();
+
+            if (string.IsNullOrEmpty(trimmedArgs))
+            {
+                ConfigWindow.IsOpen = true;
+                return;
+            }
+
+            if (trimmedArgs == "tankstance")
+            {
+                this.Configuration.TankStance = !this.Configuration.TankStance;
+                this.Configuration.Save();
+                var status = this.Configuration.TankStance ? "enabled" : "disabled";
+                Service.ChatGui.Print($"[Don't Forget] Auto Tank Stance {status}");
+                return;
+            }
+
+            // Unknown argument, show help
+            Service.ChatGui.Print("[Don't Forget] Usage: /df [tankstance]");
         }
 
         public void DrawUI()

@@ -13,6 +13,7 @@ namespace dontforget
         [Obsolete("Renamed to SummonInCombatAfterDeath")]
         public bool SummonInCombat { get; set; } = true;
         public bool SummonInCombatAfterDeath { get; set; } = true;
+        public bool TankStance { get; set; } = true;
         public bool Peloton { get; set; } = true;
         public bool AutoSprint { get; set; } = true;
         public bool AutoGysahlGreens { get; set; } = false;

@@ -13,7 +13,7 @@ public class ConfigWindow : Window, IDisposable
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
-        this.Size = new Vector2(270, 260);
+        this.Size = new Vector2(270, 285);
         this.SizeCondition = ImGuiCond.Always;
         this.Configuration = plugin.Configuration;
     }
@@ -64,6 +64,18 @@ public class ConfigWindow : Window, IDisposable
         {
             this.Configuration.Summoner = summonerConfig;
             this.Configuration.Save();
+        }
+
+        var tankStanceConfig = this.Configuration.TankStance;
+        if (ImGui.Checkbox("Tank - Auto Tank Stance", ref tankStanceConfig))
+        {
+            this.Configuration.TankStance = tankStanceConfig;
+            this.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Automatically enables tank stance when standing still.\nToggle with: /df tankstance");
         }
 
         var summonInCombatAfterDeathConfig = this.Configuration.SummonInCombatAfterDeath;
