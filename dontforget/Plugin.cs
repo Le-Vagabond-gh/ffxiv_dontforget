@@ -21,6 +21,7 @@ namespace dontforget
         public Configuration Configuration { get; init; }
         public WindowSystem WindowSystem = new("Don't Forget");
         private ConfigWindow ConfigWindow { get; init; }
+        private GathererAutoSwitch GathererAutoSwitch { get; init; }
         private unsafe static ActionManager* AM;
         private uint summonFairy = 17215;
         private uint summonCarbuncle = 25798;
@@ -37,8 +38,18 @@ namespace dontforget
         private uint defianceStatus = 91;
         private uint gritStatus = 743;
         private uint royalGuardStatus = 1833;
+        // Gathering actions
+        private uint sneak = 304;             // Both gatherers
+        private uint prospect = 227;          // Miner
+        private uint triangulate = 210;       // Botanist
+        // Gathering status IDs
+        private uint sneakStatus = 47;
+        private uint prospectStatus = 225;      // Miner
+        private uint triangulateStatus = 217;   // Botanist
         private DateTime lastDebugLog = DateTime.MinValue;
         private DateTime lastSummonDebugLog = DateTime.MinValue;
+        private DateTime lastGatheringDebugLog = DateTime.MinValue;
+        private DateTime lastGatheringAction = DateTime.MinValue;
         private DateTime lastGysahlUse = DateTime.MinValue;
         private DateTime demiSummonLastSeen = DateTime.MinValue;
         private bool wasUnconscious = false;
@@ -57,6 +68,8 @@ namespace dontforget
 
             ConfigWindow = new ConfigWindow(this);
             WindowSystem.AddWindow(ConfigWindow);
+
+            GathererAutoSwitch = new GathererAutoSwitch(this.Configuration);
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
@@ -256,6 +269,52 @@ namespace dontforget
                         }
                     }
                 }
+
+                // Auto gathering buffs when not moving (with cooldown to prevent toggle spam)
+                if (this.Configuration.GatheringBuffs && (classJobID == 16 || classJobID == 17) && (DateTime.Now - lastGatheringAction).TotalSeconds >= 2)
+                {
+                    var statusList = Service.ObjectTable.LocalPlayer.StatusList;
+
+                    if (this.Configuration.DebugLogging && (DateTime.Now - lastGatheringDebugLog).TotalSeconds >= 2)
+                    {
+                        lastGatheringDebugLog = DateTime.Now;
+                        var prospectActionReady = AM->GetActionStatus(ActionType.Action, prospect);
+                        var triangulateActionReady = AM->GetActionStatus(ActionType.Action, triangulate);
+                        var sneakActionReady = AM->GetActionStatus(ActionType.Action, sneak);
+                        var hasProspect = statusList.Any(x => x.StatusId == prospectStatus);
+                        var hasTriangulate = statusList.Any(x => x.StatusId == triangulateStatus);
+                        var hasSneak = statusList.Any(x => x.StatusId == sneakStatus);
+                        Service.PluginLog.Info($"Gathering check - ClassJobID: {classJobID}, ProspectReady: {prospectActionReady}, TriangulateReady: {triangulateActionReady}, SneakReady: {sneakActionReady}");
+                        Service.PluginLog.Info($"  HasProspect(225): {hasProspect}, HasTriangulate(217): {hasTriangulate}, HasSneak(47): {hasSneak}");
+                        Service.PluginLog.Info($"  All statuses: {string.Join(", ", statusList.Select(x => x.StatusId))}");
+                    }
+
+                    // Miner (16) / Botanist (17) - Prospect + Triangulate + Sneak
+                    if (!statusList.Any(x => x.StatusId == prospectStatus))
+                    {
+                        if (AM->GetActionStatus(ActionType.Action, prospect) == 0)
+                        {
+                            AM->UseAction(ActionType.Action, prospect);
+                            lastGatheringAction = DateTime.Now;
+                        }
+                    }
+                    else if (!statusList.Any(x => x.StatusId == triangulateStatus))
+                    {
+                        if (AM->GetActionStatus(ActionType.Action, triangulate) == 0)
+                        {
+                            AM->UseAction(ActionType.Action, triangulate);
+                            lastGatheringAction = DateTime.Now;
+                        }
+                    }
+                    else if (!statusList.Any(x => x.StatusId == sneakStatus))
+                    {
+                        if (AM->GetActionStatus(ActionType.Action, sneak) == 0)
+                        {
+                            AM->UseAction(ActionType.Action, sneak);
+                            lastGatheringAction = DateTime.Now;
+                        }
+                    }
+                }
             }
 
             // Auto Gysahl Greens when chocobo timer is low (after pet summon to prioritize pets)
@@ -283,6 +342,7 @@ namespace dontforget
         public void Dispose()
         {
             this.WindowSystem.RemoveAllWindows();
+            this.GathererAutoSwitch.Dispose();
             this.CommandManager.RemoveHandler(CommandName);
             this.CommandManager.RemoveHandler(ShortCommandName);
             Service.Framework.Update -= onFrameworkUpdate;

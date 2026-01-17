@@ -11,6 +11,8 @@ A Dalamud plugin that automates common actions you always forget to do in FFXIV.
 - **Summon Carbuncle** - Automatically summons your carbuncle when standing still (Summoner)
 - **Summon in Combat (After Death)** - Re-summons your pet in combat after being raised
 - **Auto Tank Stance** - Automatically enables tank stance when standing still (PLD, WAR, DRK, GNB)
+- **Gatherer Auto Buffs** - Automatically enables Prospect, Triangulate, and Sneak when standing still (Miner, Botanist)
+- **Gatherer Auto Switch** - Automatically switches to the correct gatherer class when you try to gather from the wrong node type (requires a gearset saved for each gatherer class)
 
 ## Installation
 - Download the DLL and manifest JSON from [Releases](https://github.com/Le-Vagabond-gh/ffxiv_dontforget/releases) in the same location

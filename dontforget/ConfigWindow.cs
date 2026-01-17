@@ -13,7 +13,7 @@ public class ConfigWindow : Window, IDisposable
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
-        this.Size = new Vector2(270, 285);
+        this.Size = new Vector2(290, 335);
         this.SizeCondition = ImGuiCond.Always;
         this.Configuration = plugin.Configuration;
     }
@@ -76,6 +76,30 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("Automatically enables tank stance when standing still.\nToggle with: /df tankstance");
+        }
+
+        var gatheringBuffsConfig = this.Configuration.GatheringBuffs;
+        if (ImGui.Checkbox("Gatherer - Auto Buffs", ref gatheringBuffsConfig))
+        {
+            this.Configuration.GatheringBuffs = gatheringBuffsConfig;
+            this.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Automatically enables Prospect/Triangulate and Sneak\nwhen standing still on Miner or Botanist.");
+        }
+
+        var autoSwitchGathererConfig = this.Configuration.AutoSwitchGatherer;
+        if (ImGui.Checkbox("Gatherer - Auto Switch Class", ref autoSwitchGathererConfig))
+        {
+            this.Configuration.AutoSwitchGatherer = autoSwitchGathererConfig;
+            this.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Automatically switches to Miner or Botanist when you\ntry to gather from the wrong node type.\nRequires a gearset saved for each gatherer class.");
         }
 
         var summonInCombatAfterDeathConfig = this.Configuration.SummonInCombatAfterDeath;
