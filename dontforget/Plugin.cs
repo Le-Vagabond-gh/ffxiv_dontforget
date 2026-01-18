@@ -114,6 +114,7 @@ namespace dontforget
             if (wasUnconscious && !isCurrentlyUnconscious)
             {
                 playerRaisedTimestamp = DateTime.Now;
+                demiSummonLastSeen = DateTime.MinValue; // Clear grace period so pet summons immediately after raise
                 if (this.Configuration.DebugLogging)
                 {
                     Service.PluginLog.Info("Player raised - combat summon allowed for 15 seconds");
@@ -205,7 +206,8 @@ namespace dontforget
                     lastSummonDebugLog = DateTime.Now;
                     var isFairySummonReady = AM->GetActionStatus(ActionType.Action, summonFairy) == 0;
                     var isCarbuncleSummonReady = AM->GetActionStatus(ActionType.Action, summonCarbuncle) == 0;
-                    Service.PluginLog.Info($"Summon check - ClassJobID: {classJobID}, HasPet: {hasPet}, FairyReady: {isFairySummonReady}, CarbuncleReady: {isCarbuncleSummonReady}, ScholarEnabled: {this.Configuration.Scholar}, SummonerEnabled: {this.Configuration.Summoner}");
+                    var debugTimeSinceDemi = (DateTime.Now - demiSummonLastSeen).TotalSeconds;
+                    Service.PluginLog.Info($"Summon check - ClassJobID: {classJobID}, HasPet: {hasPet}, HasDemi: {hasDemiSummon}, DemiLastSeen: {debugTimeSinceDemi:F1}s ago, FairyReady: {isFairySummonReady}, CarbuncleReady: {isCarbuncleSummonReady}");
                     
                     // Debug: Log all objects owned by player
                     var petObjects = Service.ObjectTable.Where(obj => obj.OwnerId == playerGameObjectId).ToList();
@@ -216,7 +218,11 @@ namespace dontforget
                     }
                 }
 
-                if (!hasPet)
+                // Grace period after demi-summon despawns - carbuncle returns automatically
+                var timeSinceDemiSummon = (DateTime.Now - demiSummonLastSeen).TotalSeconds;
+                var demiSummonGracePeriod = demiSummonLastSeen != DateTime.MinValue && timeSinceDemiSummon < 3;
+
+                if (!hasPet && !demiSummonGracePeriod)
                 {
                     var isFairySummonReady = AM->GetActionStatus(ActionType.Action, summonFairy) == 0;
                     var isCarbuncleSummonReady = AM->GetActionStatus(ActionType.Action, summonCarbuncle) == 0;

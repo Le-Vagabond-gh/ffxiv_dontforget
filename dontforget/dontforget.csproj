@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.Sdk/14.0.1">
 
   <PropertyGroup>
-    <Version>0.0.0.4</Version>
+    <Version>1.4.1</Version>
     <TargetFramework>net10.0</TargetFramework>
     <Description>Plugin that automatically summons summons and pelotons pelotons</Description>
     <PackageProjectUrl>https://github.com/Le-Vagabond-gh/ffxiv_dontforget</PackageProjectUrl>
