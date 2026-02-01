@@ -52,6 +52,7 @@ namespace dontforget
         private DateTime lastGatheringAction = DateTime.MinValue;
         private DateTime lastGysahlUse = DateTime.MinValue;
         private DateTime demiSummonLastSeen = DateTime.MinValue;
+        private DateTime movementStartTime = DateTime.MinValue;
         private bool wasUnconscious = false;
         private bool wasInCombat = false;
         private DateTime playerRaisedTimestamp = DateTime.MinValue;
@@ -156,19 +157,36 @@ namespace dontforget
                 var sprintStatus = AM->GetActionStatus(ActionType.GeneralAction, sprint);
                 var sprintRecast = AM->GetRecastTime(ActionType.GeneralAction, sprint);
                 var isMovingValue = AgentMap.Instance()->IsPlayerMoving;
-                Service.PluginLog.Info($"Peloton ready: {isPelotonReady}, Sprint ready: {isSprintReady} (status:{sprintStatus}), HasPeloton: {hasPelotonBuff}, HasSprint: {hasSprintBuff}, Moving: {isMovingValue}, Recast: {sprintRecast}");
+                var movingDuration = movementStartTime != DateTime.MinValue ? (DateTime.Now - movementStartTime).TotalSeconds : 0;
+                Service.PluginLog.Info($"Peloton ready: {isPelotonReady}, Sprint ready: {isSprintReady} (status:{sprintStatus}), HasPeloton: {hasPelotonBuff}, HasSprint: {hasSprintBuff}, Moving: {isMovingValue}, MovingFor: {movingDuration:F1}s, Recast: {sprintRecast}");
             }
 
             var isMoving = AgentMap.Instance()->IsPlayerMoving;
 
-            // Auto Peloton when moving (Phys Ranged only)
-            if (this.Configuration.Peloton && isMoving && isPelotonReady && !hasPelotonBuff)
+            // Track continuous movement for Sprint/Peloton delay
+            if (isMoving)
+            {
+                if (movementStartTime == DateTime.MinValue)
+                {
+                    movementStartTime = DateTime.Now;
+                }
+            }
+            else
+            {
+                movementStartTime = DateTime.MinValue;
+            }
+
+            var movingForTwoSeconds = movementStartTime != DateTime.MinValue &&
+                                      (DateTime.Now - movementStartTime).TotalSeconds >= 2;
+
+            // Auto Peloton when moving for 2+ seconds (Phys Ranged only)
+            if (this.Configuration.Peloton && movingForTwoSeconds && isPelotonReady && !hasPelotonBuff)
             {
                 AM->UseAction(ActionType.Action, peloton);
             }
 
-            // Auto Sprint when moving (any class)
-            if (this.Configuration.AutoSprint && isMoving && isSprintReady && !hasPelotonBuff && !hasSprintBuff)
+            // Auto Sprint when moving for 2+ seconds (any class)
+            if (this.Configuration.AutoSprint && movingForTwoSeconds && isSprintReady && !hasPelotonBuff && !hasSprintBuff)
             {
                 AM->UseAction(ActionType.GeneralAction, sprint);
             }
