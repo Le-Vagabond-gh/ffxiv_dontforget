@@ -87,7 +87,7 @@ public class ConfigWindow : Window, IDisposable
 
         if (ImGui.IsItemHovered())
         {
-            ImGui.SetTooltip("Automatically enables Prospect/Triangulate and Sneak\nwhen standing still on Miner or Botanist.");
+            ImGui.SetTooltip("Automatically enables Prospect/Triangulate, Sneak, and\nTruth of Mountains/Forests/Oceans when standing still\non Miner, Botanist, or Fisher.");
         }
 
         var autoSwitchGathererConfig = this.Configuration.AutoSwitchGatherer;

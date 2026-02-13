@@ -42,10 +42,16 @@ namespace dontforget
         private uint sneak = 304;             // Both gatherers
         private uint prospect = 227;          // Miner
         private uint triangulate = 210;       // Botanist
+        private uint truthOfMountains = 238;  // Miner
+        private uint truthOfForests = 221;    // Botanist
+        private uint truthOfOceans = 7911;    // Fisher
         // Gathering status IDs
         private uint sneakStatus = 47;
         private uint prospectStatus = 225;      // Miner
         private uint triangulateStatus = 217;   // Botanist
+        private uint truthOfMountainsStatus = 222;
+        private uint truthOfForestsStatus = 221;
+        private uint truthOfOceansStatus = 1173;
         private DateTime lastDebugLog = DateTime.MinValue;
         private DateTime lastSummonDebugLog = DateTime.MinValue;
         private DateTime lastGatheringDebugLog = DateTime.MinValue;
@@ -149,7 +155,7 @@ namespace dontforget
             var isPelotonReady = AM->GetActionStatus(ActionType.Action, peloton) == 0;
             var isSprintReady = AM->GetActionStatus(ActionType.GeneralAction, sprint) == 0;
             var hasPelotonBuff = Service.ObjectTable.LocalPlayer.StatusList.Any(x => x.StatusId == 1199);
-            var hasSprintBuff = Service.ObjectTable.LocalPlayer.StatusList.Any(x => x.StatusId == 50);
+            var hasSprintBuff = Service.ObjectTable.LocalPlayer.StatusList.Any(x => x.StatusId == 50 || x.StatusId == 4398);
 
             if (this.Configuration.DebugLogging && (DateTime.Now - lastDebugLog).TotalSeconds >= 2)
             {
@@ -295,7 +301,7 @@ namespace dontforget
                 }
 
                 // Auto gathering buffs when not moving (with cooldown to prevent toggle spam)
-                if (this.Configuration.GatheringBuffs && (classJobID == 16 || classJobID == 17) && (DateTime.Now - lastGatheringAction).TotalSeconds >= 2)
+                if (this.Configuration.GatheringBuffs && (classJobID == 16 || classJobID == 17 || classJobID == 18) && (DateTime.Now - lastGatheringAction).TotalSeconds >= 2)
                 {
                     var statusList = Service.ObjectTable.LocalPlayer.StatusList;
 
@@ -308,34 +314,39 @@ namespace dontforget
                         var hasProspect = statusList.Any(x => x.StatusId == prospectStatus);
                         var hasTriangulate = statusList.Any(x => x.StatusId == triangulateStatus);
                         var hasSneak = statusList.Any(x => x.StatusId == sneakStatus);
+                        var hasTruthMountains = statusList.Any(x => x.StatusId == truthOfMountainsStatus);
+                        var hasTruthForests = statusList.Any(x => x.StatusId == truthOfForestsStatus);
+                        var hasTruthOceans = statusList.Any(x => x.StatusId == truthOfOceansStatus);
                         Service.PluginLog.Info($"Gathering check - ClassJobID: {classJobID}, ProspectReady: {prospectActionReady}, TriangulateReady: {triangulateActionReady}, SneakReady: {sneakActionReady}");
                         Service.PluginLog.Info($"  HasProspect(225): {hasProspect}, HasTriangulate(217): {hasTriangulate}, HasSneak(47): {hasSneak}");
-                        Service.PluginLog.Info($"  All statuses: {string.Join(", ", statusList.Select(x => x.StatusId))}");
+                        Service.PluginLog.Info($"  HasTruthMountains(222): {hasTruthMountains}, HasTruthForests(221): {hasTruthForests}, HasTruthOceans(1173): {hasTruthOceans}");
+                        var statusSheet = Service.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Status>();
+                        var statusNames = statusList.Select(x => {
+                            var row = statusSheet.GetRow(x.StatusId);
+                            var name = row.Name.ToString();
+                            return $"{x.StatusId}({name})";
+                        });
+                        Service.PluginLog.Info($"  All statuses: {string.Join(", ", statusNames)}");
                     }
 
-                    // Miner (16) / Botanist (17) - Prospect + Triangulate + Sneak
-                    if (!statusList.Any(x => x.StatusId == prospectStatus))
+                    // Try each gathering buff in order, skip if action unavailable for current class/level
+                    var buffsToApply = new (uint statusId, uint actionId)[]
                     {
-                        if (AM->GetActionStatus(ActionType.Action, prospect) == 0)
-                        {
-                            AM->UseAction(ActionType.Action, prospect);
-                            lastGatheringAction = DateTime.Now;
-                        }
-                    }
-                    else if (!statusList.Any(x => x.StatusId == triangulateStatus))
+                        (prospectStatus, prospect),
+                        (triangulateStatus, triangulate),
+                        (sneakStatus, sneak),
+                        (truthOfMountainsStatus, truthOfMountains),
+                        (truthOfForestsStatus, truthOfForests),
+                        (truthOfOceansStatus, truthOfOceans),
+                    };
+
+                    foreach (var (statusId, actionId) in buffsToApply)
                     {
-                        if (AM->GetActionStatus(ActionType.Action, triangulate) == 0)
+                        if (!statusList.Any(x => x.StatusId == statusId) && AM->GetActionStatus(ActionType.Action, actionId) == 0)
                         {
-                            AM->UseAction(ActionType.Action, triangulate);
+                            AM->UseAction(ActionType.Action, actionId);
                             lastGatheringAction = DateTime.Now;
-                        }
-                    }
-                    else if (!statusList.Any(x => x.StatusId == sneakStatus))
-                    {
-                        if (AM->GetActionStatus(ActionType.Action, sneak) == 0)
-                        {
-                            AM->UseAction(ActionType.Action, sneak);
-                            lastGatheringAction = DateTime.Now;
+                            break;
                         }
                     }
                 }
