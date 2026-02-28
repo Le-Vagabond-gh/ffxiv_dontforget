@@ -329,15 +329,21 @@ namespace dontforget
                         Service.PluginLog.Info($"  All statuses: {string.Join(", ", statusNames)}");
                     }
 
-                    // Try each gathering buff in order, skip if action unavailable for current class/level
-                    var buffsToApply = new (uint statusId, uint actionId)[]
+                    // Try each gathering buff in order, filtered by current class
+                    // Truth actions are home-world restricted (unspoiled/legendary nodes)
+                    var isOnHomeWorld = Service.ClientState.LocalPlayer.HomeWorld.RowId == Service.ClientState.LocalPlayer.CurrentWorld.RowId;
+                    (uint statusId, uint actionId)[] buffsToApply = classJobID switch
                     {
-                        (prospectStatus, prospect),
-                        (triangulateStatus, triangulate),
-                        (sneakStatus, sneak),
-                        (truthOfMountainsStatus, truthOfMountains),
-                        (truthOfForestsStatus, truthOfForests),
-                        (truthOfOceansStatus, truthOfOceans),
+                        16 => isOnHomeWorld
+                            ? new[] { (prospectStatus, prospect), (sneakStatus, sneak), (truthOfMountainsStatus, truthOfMountains) }
+                            : new[] { (prospectStatus, prospect), (sneakStatus, sneak) },
+                        17 => isOnHomeWorld
+                            ? new[] { (triangulateStatus, triangulate), (sneakStatus, sneak), (truthOfForestsStatus, truthOfForests) }
+                            : new[] { (triangulateStatus, triangulate), (sneakStatus, sneak) },
+                        18 => isOnHomeWorld
+                            ? new[] { (truthOfOceansStatus, truthOfOceans) }
+                            : Array.Empty<(uint, uint)>(),
+                        _ => Array.Empty<(uint, uint)>(),
                     };
 
                     foreach (var (statusId, actionId) in buffsToApply)
