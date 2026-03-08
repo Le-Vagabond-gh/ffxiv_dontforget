@@ -13,7 +13,7 @@ public class ConfigWindow : Window, IDisposable
         ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
         ImGuiWindowFlags.NoScrollWithMouse)
     {
-        this.Size = new Vector2(290, 335);
+        this.Size = new Vector2(290, 360);
         this.SizeCondition = ImGuiCond.Always;
         this.Configuration = plugin.Configuration;
     }
@@ -52,6 +52,18 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("Automatically use Gysahl Greens when your chocobo\ncompanion's timer falls below 15 minutes.");
+        }
+
+        var chocoboStanceConfig = this.Configuration.ChocoboStance;
+        if (ImGui.Checkbox("Auto Chocobo Stance", ref chocoboStanceConfig))
+        {
+            this.Configuration.ChocoboStance = chocoboStanceConfig;
+            this.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Remembers the last chocobo companion stance you chose\nand restores it when re-summoned or after death.");
         }
 
         if (ImGui.Checkbox("Scholar - Summon Fairy", ref scholarConfig))

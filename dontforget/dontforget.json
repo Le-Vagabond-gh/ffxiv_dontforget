@@ -2,7 +2,7 @@
     "Author": "Le Vagabond (forked from Spooee's original work)",
     "Name": "Don't Forget",
     "InternalName": "dontforget",
-    "AssemblyVersion": "1.4.2",
+    "AssemblyVersion": "1.5.0",
     "Description": "Automatically handles things you might forget: pet summoning (SMN/SCH), tank stance, Peloton, Sprint, chocobo feeding, and gatherer buffs.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/Le-Vagabond-gh/ffxiv_dontforget",

@@ -19,6 +19,8 @@ namespace dontforget
         public bool Peloton { get; set; } = true;
         public bool AutoSprint { get; set; } = true;
         public bool AutoGysahlGreens { get; set; } = false;
+        public bool ChocoboStance { get; set; } = false;
+        public byte SavedChocoboStance { get; set; } = 0;
         public bool DebugLogging { get; set; } = false;
 
         [NonSerialized]

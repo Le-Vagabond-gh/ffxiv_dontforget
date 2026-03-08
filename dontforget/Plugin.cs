@@ -22,6 +22,7 @@ namespace dontforget
         public WindowSystem WindowSystem = new("Don't Forget");
         private ConfigWindow ConfigWindow { get; init; }
         private GathererAutoSwitch GathererAutoSwitch { get; init; }
+        private ChocoboStanceKeeper ChocoboStanceKeeper { get; init; }
         private unsafe static ActionManager* AM;
         private uint summonFairy = 17215;
         private uint summonCarbuncle = 25798;
@@ -77,6 +78,7 @@ namespace dontforget
             WindowSystem.AddWindow(ConfigWindow);
 
             GathererAutoSwitch = new GathererAutoSwitch(this.Configuration);
+            ChocoboStanceKeeper = new ChocoboStanceKeeper(this.Configuration);
 
             this.CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
             {
@@ -356,6 +358,12 @@ namespace dontforget
                         }
                     }
                 }
+            }
+
+            // Auto restore chocobo companion stance
+            if (this.Configuration.ChocoboStance)
+            {
+                ChocoboStanceKeeper.Update();
             }
 
             // Auto Gysahl Greens when chocobo timer is low (after pet summon to prioritize pets)
