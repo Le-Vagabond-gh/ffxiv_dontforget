@@ -361,10 +361,7 @@ namespace dontforget
             }
 
             // Auto restore chocobo companion stance
-            if (this.Configuration.ChocoboStance)
-            {
-                ChocoboStanceKeeper.Update();
-            }
+            ChocoboStanceKeeper.Update();
 
             // Auto Gysahl Greens when chocobo timer is low (after pet summon to prioritize pets)
             // Only check every 2 seconds to allow cast to complete

@@ -54,18 +54,6 @@ public class ConfigWindow : Window, IDisposable
             ImGui.SetTooltip("Automatically use Gysahl Greens when your chocobo\ncompanion's timer falls below 15 minutes.");
         }
 
-        var chocoboStanceConfig = this.Configuration.ChocoboStance;
-        if (ImGui.Checkbox("Auto Chocobo Stance", ref chocoboStanceConfig))
-        {
-            this.Configuration.ChocoboStance = chocoboStanceConfig;
-            this.Configuration.Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            ImGui.SetTooltip("Remembers the last chocobo companion stance you chose\nand restores it when re-summoned or after death.");
-        }
-
         if (ImGui.Checkbox("Scholar - Summon Fairy", ref scholarConfig))
         {
             this.Configuration.Scholar = scholarConfig;
@@ -124,6 +112,21 @@ public class ConfigWindow : Window, IDisposable
         if (ImGui.IsItemHovered())
         {
             ImGui.SetTooltip("When enabled, pets will auto-summon in combat only if you died\nand were raised within the last 15 seconds.");
+        }
+
+        ImGui.Text("Chocobo Stance");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(130);
+        var chocoboStanceIdx = ChocoboStanceKeeper.StanceIdToIndex(this.Configuration.ChocoboStanceOption);
+        if (ImGui.Combo("##ChocoboStance", ref chocoboStanceIdx, ChocoboStanceKeeper.StanceLabels, ChocoboStanceKeeper.StanceLabels.Length))
+        {
+            this.Configuration.ChocoboStanceOption = ChocoboStanceKeeper.StanceIds[chocoboStanceIdx];
+            this.Configuration.Save();
+        }
+
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetTooltip("Enforces the selected chocobo companion stance.\nAutomatically re-applies after summon or death.");
         }
 
         ImGui.Spacing();
