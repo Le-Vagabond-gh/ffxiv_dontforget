@@ -206,14 +206,14 @@ namespace dontforget
                 var playerGameObjectId = Service.ObjectTable.LocalPlayer.GameObjectId;
                 
                 // Check if pet is already summoned by looking for pet in object table
-                var petNames = new[] { "Carbuncle", "Eos", "Selene" };
-                var demiSummonNames = new[] { "Demi-Bahamut", "Demi-Phoenix", "Ifrit-Egi", "Titan-Egi", "Garuda-Egi", "Solar Bahamut", "Seraph" };
+                var petNames = new[] { "Carbuncle", "Eos", "Selene", "Ifrit-Egi", "Titan-Egi", "Garuda-Egi" };
+                var demiSummonNames = new[] { "Demi-Bahamut", "Demi-Phoenix", "Solar Bahamut", "Seraph" };
 
                 var hasPet = Service.ObjectTable.Any(obj =>
                     obj.OwnerId == playerGameObjectId &&
                     obj.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.BattleNpc &&
                     obj.IsValid() &&
-                    petNames.Contains(obj.Name.ToString()));
+                    (petNames.Contains(obj.Name.ToString()) || obj.Name.ToString().Contains("Carbuncle")));
 
                 var hasDemiSummon = Service.ObjectTable.Any(obj =>
                     obj.OwnerId == playerGameObjectId &&
