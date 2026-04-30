@@ -1,5 +1,4 @@
-using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Chat;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using System;
 
@@ -15,14 +14,14 @@ namespace dontforget
             Service.ChatGui.ChatMessage += OnChatMessage;
         }
 
-        private unsafe void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+        private unsafe void OnChatMessage(IHandleableChatMessage chatMessage)
         {
             if (!this.configuration.AutoSwitchGatherer) return;
 
             // Check for "Unable to X. Current class not set to X" error messages (type 2108)
-            if ((int)type != 2108) return;
+            if ((int)chatMessage.LogKind != 2108) return;
 
-            var text = message.TextValue.ToLowerInvariant();
+            var text = chatMessage.Message.TextValue.ToLowerInvariant();
 
             if (this.configuration.DebugLogging)
             {

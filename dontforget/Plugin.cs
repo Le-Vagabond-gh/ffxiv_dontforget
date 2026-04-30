@@ -333,7 +333,7 @@ namespace dontforget
 
                     // Try each gathering buff in order, filtered by current class
                     // Truth actions are home-world restricted (unspoiled/legendary nodes)
-                    var isOnHomeWorld = Service.ClientState.LocalPlayer.HomeWorld.RowId == Service.ClientState.LocalPlayer.CurrentWorld.RowId;
+                    var isOnHomeWorld = Service.PlayerState.HomeWorld.RowId == Service.PlayerState.CurrentWorld.RowId;
                     (uint statusId, uint actionId)[] buffsToApply = classJobID switch
                     {
                         16 => isOnHomeWorld
