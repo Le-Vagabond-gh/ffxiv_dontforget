@@ -1,4 +1,10 @@
 ## Don't Forget
+
+> **Superseded by [YABOT](https://github.com/Le-Vagabond-gh/FFXIV_YABOT).**
+> Don't Forget has been folded into YABOT (Yet Another Bundle of Tweaks) as the
+> "Don't Forget" feature. New users should install YABOT instead - this
+> repository is archived and no longer receives updates.
+
 A Dalamud plugin that automates common actions you always forget to do in FFXIV.
 
 **Author:** Le Vagabond (forked from Spooee's original work)
